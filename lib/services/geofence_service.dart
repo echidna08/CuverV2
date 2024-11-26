@@ -48,12 +48,12 @@ class GeofenceService {
       if (isCurrentlyInZone && !wasInZone) {
         _notificationService.showTestNotification(
           title: '${geofence.name} 진입',
-          body: '지정된 영역에 들어왔습니다.',
+          body: '${geofence.name} 안에 들어왔습니다.',
         );
       } else if (!isCurrentlyInZone && wasInZone) {
         _notificationService.showTestNotification(
           title: '${geofence.name} 이탈',
-          body: '지정된 영역을 벗어났습니다.',
+          body: '${geofence.name} 밖으로 나갔습니다.',
         );
       }
 

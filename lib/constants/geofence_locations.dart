@@ -16,5 +16,12 @@ final List<GeofenceData> defaultGeofences = [
     radius: 30.0,  // 반경 30미터
     name: '금정구청',
   ),
+  GeofenceData(
+    id: 'geofence_3',
+    center: const NLatLng(35.242113, 129.092565),  // 금정구 보건소 좌표
+    radius: 30.0,  // 반경 30미터
+    name: '금정구 보건소',
+  ),
+
   // 여기에 새로운 지오펜스를 추가할 수 있습니다.
 ];

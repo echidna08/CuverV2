@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/cupertino.dart';  // iOS 스타일 위젯용
 import '../services/notification_service.dart';
 import '../services/geofence_service.dart';
 import '../constants/geofence_locations.dart';
+import '../models/geofence_data.dart';
+import '../services/busan_health_service.dart';
 
 /// 네이버 지도와 지오펜스를 표시하는 화면 위젯
 class MapScreen extends StatefulWidget {
@@ -73,7 +76,7 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     print('위치 서비스 활성화 상태: $serviceEnabled');
     
     if (!serviceEnabled) {
-      print('위치 서비스가 비활성화되어 있니다.');
+      print('치 서비스가 비활성화되어 있니다.');
       return;
     }
 
@@ -179,9 +182,254 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
         outlineWidth: 2,
       );
       
+      // 오버레이 클릭 리스너 설정
+      overlay.setOnTapListener((overlay) {
+        _showGeofenceDetails(geofence);
+      });
+      
       _mapController?.addOverlay(overlay);
-      print('지오펜스 원 추가 완료: ${geofence.name}');
+      print('지오펜스 원 추가: ${geofence.name}');
     }
+  }
+
+  // 지오펜스 상세정보를 보여주는 바텀 시트
+  void _showGeofenceDetails(GeofenceData geofence) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) {
+          if (geofence.id == 'geofence_3') {
+            return Column(
+              children: [
+                // 상단 드래그 핸들
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // 제목 부분
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        geofence.name,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '검사 항 및 비용 안내',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // API 데이터 목록
+                Expanded(
+                  child: FutureBuilder<List<Map<String, String>>>(
+                    future: BusanHealthService().getHealthcareInfo(
+                      latitude: geofence.center.latitude,
+                      longitude: geofence.center.longitude,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('검사 정보를 불러오는 중...'),
+                            ],
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.error_outline, 
+                                size: 48, 
+                                color: Colors.red[300]
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                '정보를 불러올 수 없습니다',
+                                style: TextStyle(color: Colors.red[300]),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      final examList = snapshot.data!;
+                      return ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: examList.length,
+                        itemBuilder: (context, index) {
+                          final exam = examList[index];
+                          return Card(
+                            elevation: 2,
+                            margin: const EdgeInsets.only(bottom: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Theme(
+                              data: Theme.of(context).copyWith(
+                                dividerColor: Colors.transparent,
+                                colorScheme: Theme.of(context).colorScheme.copyWith(
+                                  primary: Colors.white,
+                                  secondary: Colors.white,
+                                  surfaceTint: Colors.white,
+                                ),
+                              ),
+                              child: ExpansionTile(
+                                backgroundColor: Colors.white,
+                                collapsedBackgroundColor: Colors.white,
+                                tilePadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                iconColor: Colors.grey[700],
+                                collapsedIconColor: Colors.grey[700],
+                                title: Text(
+                                  exam['testName'] ?? '',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  exam['testKind'] ?? '',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[50],
+                                      borderRadius: const BorderRadius.vertical(
+                                        bottom: Radius.circular(12),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        _buildInfoRow(
+                                          '검사 비용',
+                                          exam['testPrice'] ?? '-',
+                                          Icons.attach_money,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        _buildInfoRow(
+                                          '기준일',
+                                          exam['dataDay'] ?? '-',
+                                          Icons.calendar_today,
+                                        ),
+                                        if (exam['testKind'] != null) ...[
+                                          const SizedBox(height: 8),
+                                          _buildInfoRow(
+                                            '검사 종류',
+                                            exam['testKind']!,
+                                            Icons.medical_services,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          } else {
+            // 다른 지오펜스들의 기본 정보 표시 (이전과 동일)
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      geofence.name,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('위도: ${geofence.center.latitude}'),
+                    Text('경도: ${geofence.center.longitude}'),
+                    Text('반경: ${geofence.radius}m'),
+                  ],
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: Colors.blue[700],
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: Colors.black87,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
