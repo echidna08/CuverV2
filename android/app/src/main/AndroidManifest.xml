@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:label="CUver"
@@ -72,6 +73,11 @@
         <meta-data
             android:name="com.naver.maps.map.CLIENT_ID"
             android:value="32w5an7m3b" />
+
+        <service
+            android:name=".GeofencingService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
     </application>
 
     <!-- URL Launcher를 위한 쿼리 추가 -->

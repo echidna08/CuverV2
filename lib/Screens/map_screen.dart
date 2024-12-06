@@ -376,14 +376,27 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
               ],
             );
           } else {
-            // 다른 지오펜스들의 기본 정보 표시 (이전과 동일)
+            // 다른 지오펜스들의 기본 정보 표시 부분
             return SingleChildScrollView(
               controller: scrollController,
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                // 좌우 패딩을 24로 늘림
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // 드래그 핸들 추가
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
                     Text(
                       geofence.name,
                       style: const TextStyle(
@@ -392,9 +405,26 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text('위도: ${geofence.center.latitude}'),
-                    Text('경도: ${geofence.center.longitude}'),
-                    Text('반경: ${geofence.radius}m'),
+                    // 정보 표시를 카드 형태로 변경
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildInfoRow('위도', '${geofence.center.latitude}', Icons.location_on),
+                            const SizedBox(height: 12),
+                            _buildInfoRow('경도', '${geofence.center.longitude}', Icons.location_on),
+                            const SizedBox(height: 12),
+                            _buildInfoRow('반경', '${geofence.radius}m', Icons.radio_button_unchecked),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

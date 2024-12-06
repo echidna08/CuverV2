@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'map_screen.dart';  // map_screen.dart import 추가
 import '../services/notification_service.dart';
+import 'profile_screen.dart';
 
 class MainScreen extends StatelessWidget {
   @override
@@ -191,6 +192,16 @@ class MainScreen extends StatelessWidget {
               fontFamily: "Pretendard",
             ),
             iconSize: 22,
+            onTap: (index) {
+              if (index == 3) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfileScreen(),
+                  ),
+                );
+              }
+            },
             items: [
               BottomNavigationBarItem(
                   icon: Icon(Icons.home_outlined), label: '홈'),
